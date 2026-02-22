@@ -1,4 +1,4 @@
-# pentest-ref
+# pentest - recon
 
 Interactive command reference for **Nmap**, **Nikto** and **Metasploit**.
 Built for learning and testing on authorized networks.
