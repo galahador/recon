@@ -1,26 +1,48 @@
-**What's inside**
+# pentest-ref
 
-Nmap — host discovery, port scanning, OS detection, NSE scripts, evasion techniques, output formats
+Interactive command reference for **Nmap**, **Nikto** and **Metasploit**.
+Built for learning and testing on authorized networks.
 
-Nikto — web vulnerability scanning, authentication, evasion, tuning reference
+🔗 **[Open Cheat Sheet → galahador.github.io/recon](https://galahador.github.io/recon/)**
 
-Metasploit — module search, configuration, meterpreter, sessions, auxiliary modules, msfvenom
+---
 
-**Features**
+## Tools Covered
 
-Click any command to copy it instantly
+**Nmap** — host discovery, port scanning, OS detection, NSE scripts, evasion techniques, output formats
 
-Tabbed layout — switch between tools fast
+**Nikto** — web vulnerability scanning, authentication, evasion modes, tuning reference
 
-Color-coded flags, values and badges
+**Metasploit** — module search, configuration, meterpreter, session management, auxiliary modules, msfvenom payload generation
 
-Works offline — single HTML file, no dependencies
+## Features
 
-Usage
-Open index.html directly in any browser. No install, no server needed. 
+- Click any command to copy instantly
+- Tabbed layout — switch between tools fast
+- Color-coded flags, values and severity badges
+- Single HTML file — works offline, no install, no dependencies
 
-Or https://galahador.github.io/recon/ 
+## Usage
 
-Legal
-For use on systems you own or have explicit written permission to test.
-Unauthorized scanning is illegal.
+```
+git clone https://github.com/galahador/recon
+```
+
+Open `index.html` in any browser. That's it.
+
+## Legal
+
+Only use on systems you own or have explicit written permission to test.
+Unauthorized scanning is illegal in most countries.
+
+---
+
+PRs welcome — open one to add commands or fix errors.
+
+
+
+
+
+
+
+
